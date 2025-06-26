@@ -1,5 +1,12 @@
+let lastValue = null;
+let lastOperator = null;
+let repeatMode = false; 
+let openParensCount = 0;
+
+// Refrence display element
 const display = document.getElementById('display');
 
+// Track if we have performed a calculation
 let justCalculated = false;
 
 function isOperator(char) {
@@ -37,56 +44,59 @@ function appendToDisplay(value) {
     console.log('Button pressed:', value);
 
     let currentValue = display.value;
+    let lastChar = currentValue.slice(-1);
 
+    // If a number is entered after a calculation, start fresh
     if (justCalculated && !isNaN(value)) {
         display.value = value;
         justCalculated = false;
         return;
     }
 
+    // Allow chaining after calculation (e.g., result + ...)
     if (justCalculated && isOperator(value)) {
         display.value = currentValue + value;
         justCalculated = false;
         return;
     }
 
-    if (isOperator(value)){
-        if (currentValue === '0' && value !== '-'){
-            return;
-        }
+    // Handle operators
+    if (isOperator(value)) {
+        // Don't allow operator first (except minus)
+        if (currentValue === '0' && value !== '-') return;
 
-        if (isOperator(getLastChar())) {
+        // Replace the last operator if already present
+        if (isOperator(lastChar)) {
             display.value = currentValue.slice(0, -1) + value;
         } else {
             display.value = currentValue + value;
         }
 
-    } else if (!isNaN(value)){
-
-        if (currentValue === '0'){
+    } else if (!isNaN(value)) {
+        // Handle numbers
+        if (currentValue === '0') {
             display.value = value;
         } else {
             display.value = currentValue + value;
         }
 
-    } else if (value === '.' ) {
-
-        if (currentValue === '0') {
+    } else if (value === '.') {
+        // Handle decimals only if not already in current number
+        let parts = currentValue.split(/[\+\-\*÷]/);
+        let lastNumber = parts[parts.length - 1];
+        if (!lastNumber.includes('.')) {
             display.value = currentValue + value;
-        } else {
-            let parts = currentValue.split('/[+\-*/');
-            let lastNumber = parts[parts.length - 1];
-
-            if (!lastNumber.includes('.')){
-                display.value = currentValue + value;
-            }
         }
+
+    } else if (value === '(' && (/\d|\)/.test(lastChar))) {
+        // Implicit multiplication: e.g., 2(3+1) → 2*(3+1)
+        display.value = currentValue + '*' + value;
+
     } else {
         display.value = currentValue + value;
     }
 
     justCalculated = false;
-
     console.log('Display updated to: ', display.value);
 }
 
@@ -108,6 +118,7 @@ function deleteLast() {
 
     let currentValue = display.value;
 
+    // If theres only one character or its 0, reset to 0
     if (currentValue.length <= 1 || currentValue === '0') {
         display.value = '0';
     } else {
@@ -115,38 +126,70 @@ function deleteLast() {
     }
 }
 
+function percent() {
+    const display = document.getElementById("display");
+    let currentValue = parseFloat(display.value);
+    if (!isNaN(currentValue)) {
+        display.value = currentValue / 100;
+    }
+}
+
+function negativeSign() {
+    const display = document.getElementById("display");
+    let currentValue = parseFloat(display.value);
+    if (!isNaN(currentValue)) {
+        display.value = currentValue * -1;
+    }
+}
+
+
+function squareRoot() {
+    const display = document.getElementById("display");
+    let currentValue = parseFloat(display.value);
+    if (!isNaN(currentValue)) {
+        display.value = Math.sqrt(currentValue);
+    }
+}
+
+function NumberSqured() {
+    const display = document.getElementById("display");
+    let currentValue = parseFloat(display.value);
+    if (!isNaN(currentValue)) {
+        display.value = Math.pow(currentValue, 2);
+    }
+}
+
 function calculate() {
-    let expression = display.value;
+    const display = document.getElementById("display");
+    let currentValue = display.value;
 
-    if (expression === '0' || expression === ''){
-        return;
-    }
+    if (!repeatMode) {
+        // First press: evaluate normally and store last operator/value
+        let expression = currentValue.replace(/÷/g, '/');
+        try {
+            let result = eval(expression);
+            display.value = result;
 
-    if (isOperator(getLastChar())){
-        return;
-    }
-
-    let result = safeEval(expression);
-
-    if (result === 'Error') {
-        display.value = 'Error';
-        setTimeout(() => {
-            clearDisplay()
-        }, 2000);
-    } else {
-        if (Number.isInteger(result)) {
-            display.value = result.toString();
-        } else {
-            display.value = parseFloat(result.toFixed(10)).toString();
+            // Extract last operator and value
+            const match = currentValue.match(/([-+*/÷])\s*([\d.]+)$/);
+            if (match) {
+                lastOperator = match[1] === '÷' ? '/' : match[1];
+                lastValue = parseFloat(match[2]);
+            }
+            repeatMode = true;
+        } catch {
+            display.value = 'Error';
         }
-
-        justCalculated = true;
+    } else {
+        // Second+ press: repeat last operation with result
+        try {
+            let newExpression = display.value + lastOperator + lastValue;
+            let result = eval(newExpression);
+            display.value = result;
+        } catch {
+            display.value = 'Error';
+        }
     }
-
-    display.style.backgroundColor = '#e8f5e8';
-    setTimeout(() => {
-        display.style.backgroundColor = '';
-    }, 300);
 }
 
 document.addEventListener('keydown', function(event) {
