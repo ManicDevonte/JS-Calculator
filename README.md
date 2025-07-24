@@ -1,8 +1,9 @@
 # JS-Calculator
-Calculator
+
 This is a simple web-based calculator application, built with HTML, CSS, and JavaScript. It provides basic arithmetic operations and a user-friendly interface.
 
 Features
+
 Basic Arithmetic Operations: Perform addition, subtraction, multiplication, and division.
 
 Decimal Support: Handle calculations involving decimal numbers.
@@ -22,12 +23,15 @@ Chaining Operations: Continue calculations with the result of the previous opera
 Parentheses Support: Define the order of operations using parentheses.
 
 Getting Started
+
 To get a local copy up and running, follow these simple steps.
 
 Prerequisites
+
 You only need a web browser to use this calculator.
 
 Installation
+
 Clone the repository:
 
 Bash
